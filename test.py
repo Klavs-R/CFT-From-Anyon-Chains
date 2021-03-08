@@ -1,11 +1,12 @@
+import numpy as np
 from fibonacci import FibChain
 
 __author__ = "Klavs Riekstins"
+np.set_printoptions(precision=2)
 
 
 if __name__ == "__main__":
-    for chain_len in range(10):
-        f_chain = FibChain(chain_len, False)
-        print(chain_len, len(f_chain.flat_basis))
-    f_chain = FibChain(3, False)
-    print(*f_chain.flat_basis, sep="\n")
+    f_chain = FibChain(4, True)
+
+    print(f_chain.Ham, "\n")
+    print(f_chain.get_eigs())
