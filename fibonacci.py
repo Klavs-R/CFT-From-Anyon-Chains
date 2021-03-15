@@ -26,7 +26,7 @@ class FibChain:
             "010,010": 1,
             "111,111": golden**(-1),
             "101,111": golden**(-3/2),
-            "111,101": golden**(-3 / 2)
+            "111,101": golden**(-3/2)
         }
 
         self.AllHams = self.get_hams()
@@ -56,7 +56,7 @@ class FibChain:
 
         return valid
 
-    def calc_h(self):
+    def calc_h(self, pos):
         """
         Calculates a local hamiltonian at the fist point in the chain by
         distributing calculated hamiltonian for 2-chain (H_basic)
@@ -66,12 +66,16 @@ class FibChain:
 
         for i in range(size):
             row = self.flat_basis[i]
-            tail1 = row[3:]
+            head1 = row[:pos-1]
+            tail1 = row[pos+2:]
             for j in range(size):
                 col = self.flat_basis[j]
-                tail2 = col[3:]
-                if tail1 == tail2:
-                    val = self.H_basic.get(f"{row[:3]},{col[:3]}")
+                head2 = col[:pos - 1]
+                tail2 = col[pos+2:]
+                if tail1 == tail2 and head1 == head2:
+                    val = self.H_basic.get(
+                        f"{row[pos-1:pos+2]},{col[pos-1:pos+2]}"
+                    )
                     if val:
                         point_h[i][j] = val
 
@@ -104,16 +108,19 @@ class FibChain:
 
     def get_hams(self):
         """
-        Wrapper to calculate all local Hamiltonians for periodic chains
+        Wrapper to calculate all local Hamiltonians
 
         :return: All local Hamiltonians for chain
         """
-        if not self.periodic:
-            logging.error("Hamiltonian currently only available for periodic")
-            return []
+        hams = [self.calc_h(1)]
 
-        hams = [self.calc_h()]
-        hams.extend(self.__cycle_h(self.flat_basis, hams[0]))
+        if self.periodic:
+            hams.extend(self.__cycle_h(self.flat_basis, hams[0]))
+        else:
+            positions = len(self.flat_basis[0]) - 3
+            for pos in range(positions):
+                hams.append(self.calc_h(pos+2))
+
         return hams
 
     def get_eigs(self, individual=False):
