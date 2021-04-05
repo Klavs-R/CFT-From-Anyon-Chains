@@ -1,60 +1,37 @@
-import logging
 import numpy as np
-import itertools as it
-
-from scipy.constants import golden
 
 __author__ = "Klavs Riekstins"
 
 
-class FibChain:
-    def __init__(self, chain_length, periodic):
-        """
-        Chain of fibonacci anyons of given length and periodicity
+class AnyonChain:
 
-        :param chain_length: Number of anyons external anyons in chain
-        :param periodic: If space is periodic
+    def __init__(
+            self,
+            chain_length,
+            periodic,
+            basis,
+            h_local
+    ):
         """
-        if chain_length < 3:
-            logging.error("Chain length must be > 2, defaulting to 3")
+        Generic class for anyon chain with adjacent (nearest neighbour)
+        interactions. Chain of given length, periodicity and basis with local
+        hamiltonian in a dictionary format.
 
+        :param chain_length: Number of external anyons in chain
+        :param periodic: If space/chain is periodic
+        :param basis: Ordered set of basis states for given chain
+        :param h_local: Local hamiltonian (2 adjacent anyons) for the chain in
+                        above basis formatted as a dictionary:
+
+                        "state1,state2": H matrix position value
+        """
         self.length = max(3, chain_length)
         self.periodic = periodic
-        self.flat_basis = self.get_states()
-        self.H_basic = {
-            "101,101": golden**(-2),
-            "010,010": 1,
-            "111,111": golden**(-1),
-            "101,111": golden**(-3/2),
-            "111,101": golden**(-3/2)
-        }
+        self.flat_basis = basis
+        self.H_local = h_local
 
         self.AllHams = self.get_hams()
         self.Ham = sum(self.AllHams)
-
-    def get_states(self):
-        """
-        Gets all valid states of flat chain (in ascending binary order).
-
-        :return: Ordered flat basis for given system
-        """
-        if self.periodic:
-            states = it.product([0, 1], repeat=self.length)
-        else:
-            states = it.product([0, 1], repeat=self.length + 1)
-
-        valid = []
-        for state in states:
-            if self.periodic:
-                tup = state + (state[0], state[1])
-            else:
-                tup = state
-
-            state_str = "".join(map(str, tup))
-            if "00" not in state_str:
-                valid.append("".join(map(str, state)))
-
-        return valid
 
     def calc_h(self, pos):
         """
@@ -62,7 +39,7 @@ class FibChain:
         distributing calculated hamiltonian for 2-chain (H_basic)
         """
         size = len(self.flat_basis)
-        point_h = np.zeros([size, size])
+        point_h = np.zeros([size, size], dtype=complex)
 
         for i in range(size):
             row = self.flat_basis[i]
@@ -73,7 +50,7 @@ class FibChain:
                 head2 = col[:pos - 1]
                 tail2 = col[pos+2:]
                 if tail1 == tail2 and head1 == head2:
-                    val = self.H_basic.get(
+                    val = self.H_local.get(
                         f"{row[pos-1:pos+2]},{col[pos-1:pos+2]}"
                     )
                     if val:
@@ -119,7 +96,7 @@ class FibChain:
         else:
             positions = len(self.flat_basis[0]) - 3
             for pos in range(positions):
-                hams.append(self.calc_h(pos+2))
+                hams.append(self.calc_h(pos + 2))
 
         return hams
 
