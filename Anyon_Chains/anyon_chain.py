@@ -35,8 +35,8 @@ class AnyonChain:
 
     def calc_h(self, pos):
         """
-        Calculates a local hamiltonian at the fist point in the chain by
-        distributing calculated hamiltonian for 2-chain (H_basic)
+        Calculates a local hamiltonian at given point in the chain by
+        distributing the minimal local Hamiltonian (H_basic)
         """
         size = len(self.flat_basis)
         point_h = np.zeros([size, size], dtype=complex)
