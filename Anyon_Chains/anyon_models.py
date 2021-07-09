@@ -16,10 +16,11 @@ __author__ = "Klavs Riekstins"
 
 class Fibonacci(AnyonChain):
 
-    def __init__(self, length, periodic):
+    def __init__(self, directory, length, periodic=True):
         """
         Anyon chain of fibonacci anyons
 
+        :param directory: Directory where models should be saved
         :param length: Number of external anyons in chain
         :param periodic: If space/chain is periodic
         """
@@ -36,7 +37,7 @@ class Fibonacci(AnyonChain):
             "111,101": -(golden ** (-3 / 2))
         }
 
-        super().__init__(length, periodic, basis, h_local)
+        super().__init__(directory, "Fibonacci", length, periodic, basis, h_local)
 
     @staticmethod
     def get_states(length, periodic):
@@ -64,12 +65,13 @@ class Fibonacci(AnyonChain):
         return valid
 
 
-class LeeYang(AnyonChain):
+class YangLee(AnyonChain):
 
-    def __init__(self, length, periodic):
+    def __init__(self, directory, length, periodic=True):
         """
         Anyon chain of fibonacci anyons
 
+        :param directory: Directory where models should be saved
         :param length: Number of external anyons in chain
         :param periodic: If space/chain is periodic
         """
@@ -86,7 +88,7 @@ class LeeYang(AnyonChain):
             "111,101": (1j * (golden ** (3 / 2)))
         }
 
-        super().__init__(length, periodic, basis, h_local)
+        super().__init__(directory, "Yang-Lee", length, periodic, basis, h_local)
 
     @staticmethod
     def get_states(length, periodic):

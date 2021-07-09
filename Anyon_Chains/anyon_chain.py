@@ -1,3 +1,7 @@
+import json
+import pickle
+import os
+
 import numpy as np
 
 __author__ = "Klavs Riekstins"
@@ -7,6 +11,8 @@ class AnyonChain:
 
     def __init__(
             self,
+            directory,
+            model,
             chain_length,
             periodic,
             basis,
@@ -17,6 +23,8 @@ class AnyonChain:
         interactions. Chain of given length, periodicity and basis with local
         hamiltonian in a dictionary format.
 
+        :param directory: Directory where models should be saved
+        :param model: Name of current model (e.g. Yang-Lee)
         :param chain_length: Number of external anyons in chain
         :param periodic: If space/chain is periodic
         :param basis: Ordered set of basis states for given chain
@@ -25,13 +33,27 @@ class AnyonChain:
 
                         "state1,state2": H matrix position value
         """
+        self.model = model
         self.length = max(3, chain_length)
         self.periodic = periodic
         self.flat_basis = basis
         self.H_local = h_local
+        self.eigvals = np.array([])
+        self.AllHams = []
 
-        self.AllHams = self.get_hams()
-        self.Ham = sum(self.AllHams)
+        self.path = os.path.join(directory, f"{self.model}_{self.length}.pkl")
+
+        if os.path.exists(self.path):
+            with open(self.path, "rb") as f:
+                unpickler = pickle.Unpickler(f)
+                tmp = unpickler.load()
+
+            self.eigvals = tmp["eigenvalues"]
+            self.Ham = tmp["full"]
+
+        else:
+            self.AllHams = self.get_hams()
+            self.Ham = sum(self.AllHams)
 
     def calc_h(self, pos):
         """
@@ -108,11 +130,32 @@ class AnyonChain:
         :param individual: Find eigenvals of local Hamiltonians (True)
         :return: All eigenvals
         """
-        vals = []
         if individual:
+            vals = []
+            if not self.AllHams:
+                self.AllHams = self.get_hams()
+
             for matrix in self.AllHams:
                 vals.extend(np.linalg.eigvals(matrix))
-        else:
-            vals = np.linalg.eigvals(self.Ham)
+            return vals
 
-        return vals
+        elif self.eigvals.size == 0:
+            self.eigvals = np.linalg.eigvals(self.Ham)
+
+        return self.eigvals
+
+    def save(self):
+
+        if not os.path.exists(os.path.split(self.path)[0]):
+            os.mkdir(os.path.split(self.path)[0])
+
+        if self.eigvals.size == 0:
+            self.eigvals = self.get_eigs()
+
+        tmp = {
+            "eigenvalues": self.eigvals,
+            "full": self.Ham
+        }
+
+        with open(self.path, "wb") as f:
+            pickle.dump(tmp, f)
